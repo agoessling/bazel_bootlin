@@ -64,9 +64,9 @@ def create_wrappers(wrapper_dir):
 
 def write_toolchain_info(filename):
   with open(filename, 'w') as f:
-    f.write('AVAILABLE_TOOLCHAINS = {}\n'.format(_AVAILABLE_TOOLCHAINS))
-    f.write('ALL_TOOLS = {}\n'.format(_ALL_TOOLS))
-    f.write('ARCH_MAPPING = {}\n'.format(_ARCH_MAPPING))
+    f.write('AVAILABLE_TOOLCHAINS = {}\n'.format(str(_AVAILABLE_TOOLCHAINS).replace("'", "\"")))
+    f.write('ALL_TOOLS = {}\n'.format(str(_ALL_TOOLS).replace("'", "\"")))
+    f.write('ARCH_MAPPING = {}\n'.format(str(_ARCH_MAPPING).replace("'", "\"")))
 
 
 def write_test_script(filename):

@@ -6,7 +6,7 @@ def all_platforms():
             name = "{0}-linux-gnu".format(architecture),
             constraint_values = [
                 "@platforms//cpu:{0}".format(ARCH_MAPPING[architecture]),
-                "@bazel_bootlin//platforms:bootlin_linux",
+                "@platforms//os:linux",
             ],
             visibility = ["//visibility:public"],
         )

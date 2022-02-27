@@ -89,7 +89,7 @@ def bootlin_toolchain_defs(architecture, buildroot_version):
         ],
         target_compatible_with = [
             "@platforms//cpu:{0}".format(ARCH_MAPPING[architecture]),
-            "@bazel_bootlin//platforms:bootlin_linux",
+            "@platforms//os:linux",
             "@bazel_bootlin//platforms:{0}".format(buildroot_version),
         ],
         toolchain = "{0}_cc_toolchain".format(toolchain_name),
