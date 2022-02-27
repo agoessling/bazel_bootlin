@@ -1,16 +1,26 @@
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("@bazel_tools//tools/cpp:cc_toolchain_config_lib.bzl", "feature", "flag_group", "flag_set",
-    "tool_path")
-load("@bootlin_bazel//toolchains:available_toolchains.bzl", "AVAILABLE_TOOLCHAINS", "ALL_TOOLS",
-    "ARCH_MAPPING")
+load(
+    "@bazel_tools//tools/cpp:cc_toolchain_config_lib.bzl",
+    "feature",
+    "flag_group",
+    "flag_set",
+    "tool_path",
+    "with_feature_set",
+)
+load(
+    "@bootlin_bazel//toolchains:toolchain_info.bzl",
+    "ALL_TOOLS",
+    "ARCH_MAPPING",
+    "AVAILABLE_TOOLCHAINS",
+)
 
 def bootlin_toolchain_deps(architecture, buildroot_version):
-    if (architecture not in AVAILABLE_TOOLCHAINS
-        or buildroot_version not in AVAILABLE_TOOLCHAINS[architecture]):
-      fail("""
-Bootlin architecture buildroot version combo ({0}, {1}) not supported.
-If required, file an issue here: https://www.github.com/agoessling/bootlin_bazel
+    if (architecture not in AVAILABLE_TOOLCHAINS or
+        buildroot_version not in AVAILABLE_TOOLCHAINS[architecture]):
+        fail("""
+Bootlin architecture and buildroot version combo ({0}, {1}) not supported.
+If required, file an issue here: https://github.com/agoessling/bootlin_bazel/issues
 """.format(architecture, buildroot_version))
 
     TOOLCHAIN_BUILD_FILE = """
@@ -25,9 +35,11 @@ filegroup(
     http_archive(
         name = toolchain_name,
         build_file_content = TOOLCHAIN_BUILD_FILE,
-        url = ("https://toolchains.bootlin.com/downloads/releases/toolchains/"
-            + "{0}/tarballs/{0}--glibc--stable-{1}.tar.bz2").format(architecture,
-                                                                    buildroot_version),
+        url = ("https://toolchains.bootlin.com/downloads/releases/toolchains/" +
+               "{0}/tarballs/{0}--glibc--stable-{1}.tar.bz2").format(
+            architecture,
+            buildroot_version,
+        ),
         sha256 = AVAILABLE_TOOLCHAINS[architecture][buildroot_version]["sha256"],
         strip_prefix = "{0}--glibc--stable-{1}".format(architecture, buildroot_version),
     )
@@ -36,6 +48,10 @@ filegroup(
         "@bootlin_bazel//toolchains:{0}_toolchain".format(toolchain_name),
     )
 
+def bootlin_all_toolchain_deps():
+    for architecture in AVAILABLE_TOOLCHAINS:
+        for buildroot_version in AVAILABLE_TOOLCHAINS[architecture]:
+            bootlin_toolchain_deps(architecture, buildroot_version)
 
 def bootlin_toolchain_defs(architecture, buildroot_version):
     toolchain_name = "{0}-linux-gnu-{1}".format(architecture, buildroot_version)
@@ -73,64 +89,148 @@ def bootlin_toolchain_defs(architecture, buildroot_version):
         ],
         target_compatible_with = [
             "@platforms//cpu:{0}".format(ARCH_MAPPING[architecture]),
-            "@platforms//os:linux",
+            "@bootlin_bazel//platforms:bootlin_linux",
             "@bootlin_bazel//platforms:{0}".format(buildroot_version),
         ],
         toolchain = "{0}_cc_toolchain".format(toolchain_name),
         toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
     )
 
-
 def bootlin_all_toolchain_defs():
     for architecture in AVAILABLE_TOOLCHAINS:
         for buildroot_version in AVAILABLE_TOOLCHAINS[architecture]:
-              bootlin_toolchain_defs(architecture, buildroot_version)
-
+            bootlin_toolchain_defs(architecture, buildroot_version)
 
 def _impl_cc_bootlin_toolchain_config(ctx):
+    """Generic implementation for toolchains provided by Bootlin built from buildroot.
+
+    Flags and features were crafted to be aligned with the native starlark implementations here:
+    https://github.com/bazelbuild/rules_cc/blob/main/cc/private/toolchain/unix_cc_toolchain_config.bzl
+    https://github.com/bazelbuild/rules_cc/blob/main/cc/private/toolchain/unix_cc_configure.bzl
+    """
     toolchain_name = "{0}-linux-gnu-{1}".format(ctx.attr.architecture, ctx.attr.buildroot_version)
 
     sysroot = "external/{0}/{1}-buildroot-linux-gnu/sysroot".format(
-        toolchain_name, ARCH_MAPPING[ctx.attr.architecture])
+        toolchain_name,
+        ARCH_MAPPING[ctx.attr.architecture],
+    )
 
     all_compile_actions = [
         ACTION_NAMES.assemble,
-	ACTION_NAMES.c_compile,
-	ACTION_NAMES.clif_match,
-	ACTION_NAMES.cpp_compile,
-	ACTION_NAMES.cpp_header_parsing,
-	ACTION_NAMES.cpp_module_codegen,
-	ACTION_NAMES.cpp_module_compile,
-	ACTION_NAMES.linkstamp_compile,
-	ACTION_NAMES.lto_backend,
-	ACTION_NAMES.preprocess_assemble,
+        ACTION_NAMES.c_compile,
+        ACTION_NAMES.clif_match,
+        ACTION_NAMES.cpp_compile,
+        ACTION_NAMES.cpp_header_parsing,
+        ACTION_NAMES.cpp_module_codegen,
+        ACTION_NAMES.cpp_module_compile,
+        ACTION_NAMES.linkstamp_compile,
+        ACTION_NAMES.lto_backend,
+        ACTION_NAMES.preprocess_assemble,
+    ]
+
+    all_cpp_compile_actions = [
+        ACTION_NAMES.clif_match,
+        ACTION_NAMES.cpp_compile,
+        ACTION_NAMES.cpp_header_parsing,
+        ACTION_NAMES.cpp_module_codegen,
+        ACTION_NAMES.cpp_module_compile,
+        ACTION_NAMES.linkstamp_compile,
+        ACTION_NAMES.lto_backend,
     ]
 
     all_link_actions = [
-	ACTION_NAMES.cpp_link_executable,
-	ACTION_NAMES.cpp_link_dynamic_library,
-	ACTION_NAMES.cpp_link_nodeps_dynamic_library,
+        ACTION_NAMES.cpp_link_executable,
+        ACTION_NAMES.cpp_link_dynamic_library,
+        ACTION_NAMES.cpp_link_nodeps_dynamic_library,
     ]
 
     tool_paths = []
     for tool in ALL_TOOLS:
-      tool_wrapper = "tool_wrappers/{0}/{1}/{2}-{3}".format(
-          ctx.attr.architecture, ctx.attr.buildroot_version, toolchain_name, tool)
-      tool_paths.append(tool_path(name = tool, path = tool_wrapper))
+        tool_wrapper = "tool_wrappers/{0}/{1}/{2}-{3}".format(
+            ctx.attr.architecture,
+            ctx.attr.buildroot_version,
+            toolchain_name,
+            tool,
+        )
+        tool_paths.append(tool_path(name = tool, path = tool_wrapper))
 
     feature_compiler_flags = feature(
         name = "compiler_flags",
         enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-U_FORTIFY_SOURCE",
+                    "-fstack-protector",
+                    "-Wall",
+                    "-Wunused-but-set-parameter",
+                    "-Wno-free-nonheap-object",
+                    "-fno-omit-frame-pointer",
+                    "-fdiagnostics-color",
+                    "-no-canonical-prefixes",
+                    "-fno-canonical-system-headers",
+                    "--sysroot={0}".format(sysroot),
+                    "-Wno-builtin-macro-redefined",
+                    "-D__DATE__=\"redacted\"",
+                    "-D__TIMESTAMP__=\"redacted\"",
+                    "-D__TIME__=\"redacted\"",
+                ])],
+            ),
+            flag_set(
+                actions = all_cpp_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-std=c++17",
+                ])],
+            ),
+        ],
+    )
+
+    feature_linker_flags = feature(
+        name = "linker_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_link_actions,
+                flag_groups = [flag_group(flags = [
+                    # Don't add --sysroot here.  For some reason this confuses the linker.
+                    "-Wl,-no-as-needed",
+                    "-Wl,-z,relro,-z,now",
+                    "-pass-exit-codes",
+                    "-lstdc++",
+                    "-lm",
+                ])],
+            ),
+            flag_set(
+                actions = all_link_actions,
+                flag_groups = [flag_group(flags = [
+                    "-Wl,--gc-sections",
+                ])],
+                with_features = [with_feature_set(features = ["opt"])],
+            ),
+        ],
+    )
+
+    feature_opt = feature(
+        name = "opt",
         flag_sets = [flag_set(
             actions = all_compile_actions,
             flag_groups = [flag_group(flags = [
-                "-no-canonical-prefixes",
-                "-fno-canonical-system-headers",
-                "--sysroot={0}".format(sysroot),
-                "-Wno-builtin-macro-redefined",
-                "-D__DATE__=\"redacted\"",
-                "-D__TIMESTAMP__=\"redacted\"",
-                "-D__TIME__=\"redacted\"",
+                "-g0",
+                "-O2",
+                "-DNDEBUG",
+                "-ffunction-sections",
+                "-fdata-sections",
+            ])],
+        )],
+    )
+
+    feature_dbg = feature(
+        name = "dbg",
+        flag_sets = [flag_set(
+            actions = all_compile_actions,
+            flag_groups = [flag_group(flags = [
+                "-g",
             ])],
         )],
     )
@@ -138,21 +238,11 @@ def _impl_cc_bootlin_toolchain_config(ctx):
     feature_supports_pic = feature("supports_pic", enabled = True)
     feature_supports_dynamic_linker = feature("supports_dynamic_linker", enabled = True)
 
-    feature_linker_flags = feature(
-        name = "linker_flags",
-        enabled = True,
-        flag_sets = [flag_set(
-            actions = all_link_actions,
-            flag_groups = [flag_group(flags = [
-                # Don't add --sysroot here.  For some reason this confuses the linker.
-                "-lstdc++",
-            ])],
-        )],
-    )
-
     features = [
         feature_compiler_flags,
         feature_linker_flags,
+        feature_opt,
+        feature_dbg,
         feature_supports_pic,
         feature_supports_dynamic_linker,
     ]
@@ -171,17 +261,16 @@ def _impl_cc_bootlin_toolchain_config(ctx):
         tool_paths = tool_paths,
     )
 
-
 cc_bootlin_toolchain_config = rule(
     implementation = _impl_cc_bootlin_toolchain_config,
     attrs = {
         "architecture": attr.string(
             mandatory = True,
-            doc = "Toolchain target architecture."
+            doc = "Toolchain target architecture.",
         ),
         "buildroot_version": attr.string(
             mandatory = True,
-            doc = "Toolchain buildroot version."
+            doc = "Toolchain buildroot version.",
         ),
     },
     provides = [CcToolchainConfigInfo],

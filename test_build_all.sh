@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+set -o xtrace
+
+bazel build --verbose_failures --platforms=@bootlin_bazel//platforms:x86-64-linux-gnu-2021.11-5 //test:test_cpp
+bazel build --verbose_failures --platforms=@bootlin_bazel//platforms:x86-64-linux-gnu-2021.11-5 //test:test_c
+bazel build --verbose_failures --platforms=@bootlin_bazel//platforms:x86-64-core-i7-linux-gnu-2020.08-1 //test:test_cpp
+bazel build --verbose_failures --platforms=@bootlin_bazel//platforms:x86-64-core-i7-linux-gnu-2020.08-1 //test:test_c
+bazel build --verbose_failures --platforms=@bootlin_bazel//platforms:aarch64-linux-gnu-2021.11-1 //test:test_cpp
+bazel build --verbose_failures --platforms=@bootlin_bazel//platforms:aarch64-linux-gnu-2021.11-1 //test:test_c
+bazel build --verbose_failures --platforms=@bootlin_bazel//platforms:aarch64-linux-gnu-2020.08-1 //test:test_cpp
+bazel build --verbose_failures --platforms=@bootlin_bazel//platforms:aarch64-linux-gnu-2020.08-1 //test:test_c

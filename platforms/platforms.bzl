@@ -1,4 +1,4 @@
-load("@bootlin_bazel//toolchains:available_toolchains.bzl", "AVAILABLE_TOOLCHAINS", "ARCH_MAPPING")
+load("@bootlin_bazel//toolchains:toolchain_info.bzl", "ARCH_MAPPING", "AVAILABLE_TOOLCHAINS")
 
 def all_platforms():
     for architecture in AVAILABLE_TOOLCHAINS:
@@ -6,7 +6,7 @@ def all_platforms():
             name = "{0}-linux-gnu".format(architecture),
             constraint_values = [
                 "@platforms//cpu:{0}".format(ARCH_MAPPING[architecture]),
-                "@platforms//os:linux",
+                "@bootlin_bazel//platforms:bootlin_linux",
             ],
             visibility = ["//visibility:public"],
         )
