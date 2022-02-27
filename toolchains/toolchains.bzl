@@ -2,26 +2,12 @@ load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/cpp:cc_toolchain_config_lib.bzl", "feature", "flag_group", "flag_set",
     "tool_path")
+load("@bootlin_bazel//toolchains:available_toolchains.bzl", "AVAILABLE_TOOLCHAINS", "ALL_TOOLS",
+    "ARCH_MAPPING")
 
-_TOOLCHAINS = {
-    'x86-64': ['2021.11-5'],
-    'x86-64-core-i7': ['2020.08-1'],
-    'aarch64': ['2021.11-1', '2020.08-1'],
-}
-
-_TOOLS = [
-    'ar',
-    'cpp',
-    'gcc',
-    'gcov',
-    'ld',
-    'nm',
-    'objdump',
-    'strip',
-]
-
-def bootlin_toolchain_deps(architecture, buildroot_version, sha256):
-    if architecture not in _TOOLCHAINS or buildroot_version not in _TOOLCHAINS[architecture]:
+def bootlin_toolchain_deps(architecture, buildroot_version):
+    if (architecture not in AVAILABLE_TOOLCHAINS
+        or buildroot_version not in AVAILABLE_TOOLCHAINS[architecture]):
       fail("""
 Bootlin architecture buildroot version combo ({0}, {1}) not supported.
 If required, file an issue here: https://www.github.com/agoessling/bootlin_bazel
@@ -34,25 +20,78 @@ filegroup(
     visibility = ["//visibility:public"],
 )"""
 
+    toolchain_name = "{0}-linux-gnu-{1}".format(architecture, buildroot_version)
+
     http_archive(
-        name = "{0}-linux-gnu-{1}".format(architecture, buildroot_version),
+        name = toolchain_name,
         build_file_content = TOOLCHAIN_BUILD_FILE,
         url = ("https://toolchains.bootlin.com/downloads/releases/toolchains/"
             + "{0}/tarballs/{0}--glibc--stable-{1}.tar.bz2").format(architecture,
                                                                     buildroot_version),
-        sha256 = sha256,
+        sha256 = AVAILABLE_TOOLCHAINS[architecture][buildroot_version]["sha256"],
         strip_prefix = "{0}--glibc--stable-{1}".format(architecture, buildroot_version),
     )
+
+    native.register_toolchains(
+        "@bootlin_bazel//toolchains:{0}_toolchain".format(toolchain_name),
+    )
+
+
+def bootlin_toolchain_defs(architecture, buildroot_version):
+    toolchain_name = "{0}-linux-gnu-{1}".format(architecture, buildroot_version)
+
+    native.filegroup(
+        name = "{0}_all_files".format(toolchain_name),
+        srcs = [
+            "@{0}//:all_files".format(toolchain_name),
+            "@bootlin_bazel//toolchains:wrappers",
+        ],
+    )
+
+    cc_bootlin_toolchain_config(
+        name = "{0}_toolchain_config".format(toolchain_name),
+        architecture = architecture,
+        buildroot_version = buildroot_version,
+    )
+
+    native.cc_toolchain(
+        name = "{0}_cc_toolchain".format(toolchain_name),
+        toolchain_config = ":{0}_toolchain_config".format(toolchain_name),
+        all_files = ":{0}_all_files".format(toolchain_name),
+        compiler_files = ":{0}_all_files".format(toolchain_name),
+        dwp_files = "@bootlin_bazel//toolchains:empty",
+        linker_files = ":{0}_all_files".format(toolchain_name),
+        objcopy_files = "@bootlin_bazel//toolchains:empty",
+        strip_files = "@bootlin_bazel//toolchains:empty",
+    )
+
+    native.toolchain(
+        name = "{0}_toolchain".format(toolchain_name),
+        exec_compatible_with = [
+            "@platforms//cpu:x86_64",
+            "@platforms//os:linux",
+        ],
+        target_compatible_with = [
+            "@platforms//cpu:{0}".format(ARCH_MAPPING[architecture]),
+            "@platforms//os:linux",
+            "@bootlin_bazel//platforms:{0}".format(buildroot_version),
+        ],
+        toolchain = "{0}_cc_toolchain".format(toolchain_name),
+        toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+    )
+
+
+def bootlin_all_toolchain_defs():
+    for architecture in AVAILABLE_TOOLCHAINS:
+        for buildroot_version in AVAILABLE_TOOLCHAINS[architecture]:
+              bootlin_toolchain_defs(architecture, buildroot_version)
 
 
 def _impl_cc_bootlin_toolchain_config(ctx):
     toolchain_name = "{0}-linux-gnu-{1}".format(ctx.attr.architecture, ctx.attr.buildroot_version)
 
-    arch_alt = ctx.attr.architecture
-    if (arch_alt.startswith("x86-64")):
-      arch_alt = "x86_64"
-
-    sysroot = "external/{0}/{1}-buildroot-linux-gnu/sysroot".format(toolchain_name, arch_alt)
+    sysroot = "external/{0}/{1}-buildroot-linux-gnu/sysroot".format(
+        toolchain_name, ARCH_MAPPING[ctx.attr.architecture])
 
     all_compile_actions = [
         ACTION_NAMES.assemble,
@@ -74,7 +113,7 @@ def _impl_cc_bootlin_toolchain_config(ctx):
     ]
 
     tool_paths = []
-    for tool in _TOOLS:
+    for tool in ALL_TOOLS:
       tool_wrapper = "tool_wrappers/{0}/{1}/{2}-{3}".format(
           ctx.attr.architecture, ctx.attr.buildroot_version, toolchain_name, tool)
       tool_paths.append(tool_path(name = tool, path = tool_wrapper))
@@ -138,7 +177,6 @@ cc_bootlin_toolchain_config = rule(
     attrs = {
         "architecture": attr.string(
             mandatory = True,
-            values = _TOOLCHAINS.keys(),
             doc = "Toolchain target architecture."
         ),
         "buildroot_version": attr.string(

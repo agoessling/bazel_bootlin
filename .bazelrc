@@ -1,2 +1,2 @@
 build --incompatible_enable_cc_toolchain_resolution
-build --platforms=//toolchains:x86-64-linux-gnu
+build --platforms=@bootlin_bazel//platforms:x86-64-core-i7-linux-gnu-2020.08-1
