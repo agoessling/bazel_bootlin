@@ -1,1 +1,2 @@
-../../tool_wrapper.sh
+#!/bin/bash
+exec external/x86-64-linux-gnu-2021.11-5/bin/x86_64-buildroot-linux-gnu-cpp.br_real $@
