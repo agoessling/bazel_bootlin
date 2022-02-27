@@ -46,7 +46,7 @@ used by Bootlin.
 
 ### Available Toolchains
 
-Currently `bazel_bootlin` only provides the "stable" version of the following Bootlin toolchains:
+Currently `bazel_bootlin` only provides the "glibc--stable" version of the following Bootlin toolchains:
 
 | Architecture | Buildroot Version |
 | --- | --- |
