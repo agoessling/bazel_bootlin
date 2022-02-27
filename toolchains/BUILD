@@ -1,4 +1,4 @@
-load("@bootlin_bazel//toolchains:toolchains.bzl", "bootlin_all_toolchain_defs")
+load("@bazel_bootlin//toolchains:toolchains.bzl", "bootlin_all_toolchain_defs")
 
 filegroup(name = "empty")
 

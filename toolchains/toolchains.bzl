@@ -9,7 +9,7 @@ load(
     "with_feature_set",
 )
 load(
-    "@bootlin_bazel//toolchains:toolchain_info.bzl",
+    "@bazel_bootlin//toolchains:toolchain_info.bzl",
     "ALL_TOOLS",
     "ARCH_MAPPING",
     "AVAILABLE_TOOLCHAINS",
@@ -20,7 +20,7 @@ def bootlin_toolchain_deps(architecture, buildroot_version):
         buildroot_version not in AVAILABLE_TOOLCHAINS[architecture]):
         fail("""
 Bootlin architecture and buildroot version combo ({0}, {1}) not supported.
-If required, file an issue here: https://github.com/agoessling/bootlin_bazel/issues
+If required, file an issue here: https://github.com/agoessling/bazel_bootlin/issues
 """.format(architecture, buildroot_version))
 
     TOOLCHAIN_BUILD_FILE = """
@@ -45,7 +45,7 @@ filegroup(
     )
 
     native.register_toolchains(
-        "@bootlin_bazel//toolchains:{0}_toolchain".format(toolchain_name),
+        "@bazel_bootlin//toolchains:{0}_toolchain".format(toolchain_name),
     )
 
 def bootlin_all_toolchain_deps():
@@ -60,7 +60,7 @@ def bootlin_toolchain_defs(architecture, buildroot_version):
         name = "{0}_all_files".format(toolchain_name),
         srcs = [
             "@{0}//:all_files".format(toolchain_name),
-            "@bootlin_bazel//toolchains:wrappers",
+            "@bazel_bootlin//toolchains:wrappers",
         ],
     )
 
@@ -75,10 +75,10 @@ def bootlin_toolchain_defs(architecture, buildroot_version):
         toolchain_config = ":{0}_toolchain_config".format(toolchain_name),
         all_files = ":{0}_all_files".format(toolchain_name),
         compiler_files = ":{0}_all_files".format(toolchain_name),
-        dwp_files = "@bootlin_bazel//toolchains:empty",
+        dwp_files = "@bazel_bootlin//toolchains:empty",
         linker_files = ":{0}_all_files".format(toolchain_name),
-        objcopy_files = "@bootlin_bazel//toolchains:empty",
-        strip_files = "@bootlin_bazel//toolchains:empty",
+        objcopy_files = "@bazel_bootlin//toolchains:empty",
+        strip_files = "@bazel_bootlin//toolchains:empty",
     )
 
     native.toolchain(
@@ -89,8 +89,8 @@ def bootlin_toolchain_defs(architecture, buildroot_version):
         ],
         target_compatible_with = [
             "@platforms//cpu:{0}".format(ARCH_MAPPING[architecture]),
-            "@bootlin_bazel//platforms:bootlin_linux",
-            "@bootlin_bazel//platforms:{0}".format(buildroot_version),
+            "@bazel_bootlin//platforms:bootlin_linux",
+            "@bazel_bootlin//platforms:{0}".format(buildroot_version),
         ],
         toolchain = "{0}_cc_toolchain".format(toolchain_name),
         toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",

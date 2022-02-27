@@ -77,7 +77,7 @@ def write_test_script(filename):
 
     for arch, buildroot_versions in _AVAILABLE_TOOLCHAINS.items():
       for version in buildroot_versions:
-        platform = '@bootlin_bazel//platforms:{}-linux-gnu-{}'.format(arch, version)
+        platform = '@bazel_bootlin//platforms:{}-linux-gnu-{}'.format(arch, version)
         f.write('bazel build --verbose_failures --platforms={} //test:test_cpp\n'.format(platform))
         f.write('bazel build --verbose_failures --platforms={} //test:test_c\n'.format(platform))
 
