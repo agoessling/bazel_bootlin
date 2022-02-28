@@ -46,13 +46,15 @@ used by Bootlin.
 
 ### Available Toolchains
 
-Currently `bazel_bootlin` only provides the "glibc--stable" version of the following Bootlin toolchains:
+Currently `bazel_bootlin` only provides the "glibc--stable" version of the following Bootlin
+toolchains:
 
 | Architecture | Buildroot Version |
 | --- | --- |
 | `x86-64` | `2021.11-5` |
 | `x86-64-core-i7` | `2020.08-1` |
 | `aarch64` | `2021.11-1`, `2020.08-1` |
+| `armv7-eabihf` | `2020.08-1` |
 
 This list is easily expanded.  If a toolchain of interest isn't available feel free to submit and
 [issue](https://github.com/agoessling/bazel_bootlin/issues), or alternatively take a look at
@@ -70,7 +72,7 @@ platform(
     constraint_values = [
         "@platforms//cpu:{architecture}",
         "@platforms//os:linux",
-        "@bazel_bootlin//platforms:{buildroot_version},
+        "@bazel_bootlin//platforms:{buildroot_version}",
     ],
 )
 ```

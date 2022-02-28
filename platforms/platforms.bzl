@@ -13,7 +13,9 @@ def all_platforms():
             native.platform(
                 name = "{0}-linux-gnu-{1}".format(architecture, buildroot_version),
                 constraint_values = [
-                    "@platforms//cpu:{0}".format(AVAILABLE_TOOLCHAINS[architecture][buildroot_version]['platform_arch']),
+                    "@platforms//cpu:{0}".format(
+                        AVAILABLE_TOOLCHAINS[architecture][buildroot_version]["platform_arch"],
+                    ),
                     "@platforms//os:linux",
                     "@bazel_bootlin//platforms:{0}".format(buildroot_version),
                 ],

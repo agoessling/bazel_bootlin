@@ -87,7 +87,9 @@ def bootlin_toolchain_defs(architecture, buildroot_version):
             "@platforms//os:linux",
         ],
         target_compatible_with = [
-            "@platforms//cpu:{0}".format(AVAILABLE_TOOLCHAINS[architecture][buildroot_version]['platform_arch']),
+            "@platforms//cpu:{0}".format(
+                AVAILABLE_TOOLCHAINS[architecture][buildroot_version]["platform_arch"],
+            ),
             "@platforms//os:linux",
             "@bazel_bootlin//platforms:{0}".format(buildroot_version),
         ],
@@ -109,7 +111,10 @@ def _impl_cc_bootlin_toolchain_config(ctx):
     """
     toolchain_name = "{0}-linux-gnu-{1}".format(ctx.attr.architecture, ctx.attr.buildroot_version)
 
-    sysroot = "external/{0}/{1}/sysroot".format(toolchain_name, AVAILABLE_TOOLCHAINS[ctx.attr.architecture][ctx.attr.buildroot_version]['tool_prefix'])
+    sysroot = "external/{0}/{1}/sysroot".format(
+        toolchain_name,
+        AVAILABLE_TOOLCHAINS[ctx.attr.architecture][ctx.attr.buildroot_version]["tool_prefix"],
+    )
 
     all_compile_actions = [
         ACTION_NAMES.assemble,
