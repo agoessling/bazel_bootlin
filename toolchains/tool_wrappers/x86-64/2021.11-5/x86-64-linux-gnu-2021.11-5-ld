@@ -1,2 +1,2 @@
 #!/bin/bash
-exec external/x86-64-linux-gnu-2021.11-5/bin/x86_64-buildroot-linux-gnu-ld.br_real $@
+exec external/x86-64-linux-gnu-2021.11-5/bin/x86_64-buildroot-linux-gnu-ld $@

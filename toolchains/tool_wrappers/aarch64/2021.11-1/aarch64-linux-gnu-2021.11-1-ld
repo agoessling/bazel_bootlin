@@ -1,2 +1,2 @@
 #!/bin/bash
-exec external/aarch64-linux-gnu-2021.11-1/bin/aarch64-buildroot-linux-gnu-ld.br_real $@
+exec external/aarch64-linux-gnu-2021.11-1/bin/aarch64-buildroot-linux-gnu-ld $@

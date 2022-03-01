@@ -73,6 +73,7 @@ def bootlin_toolchain_defs(architecture, buildroot_version):
         name = "{0}_cc_toolchain".format(toolchain_name),
         toolchain_config = ":{0}_toolchain_config".format(toolchain_name),
         all_files = ":{0}_all_files".format(toolchain_name),
+        ar_files = ":{0}_all_files".format(toolchain_name),
         compiler_files = ":{0}_all_files".format(toolchain_name),
         dwp_files = "@bazel_bootlin//toolchains:empty",
         linker_files = ":{0}_all_files".format(toolchain_name),

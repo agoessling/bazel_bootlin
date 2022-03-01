@@ -1,2 +1,2 @@
 #!/bin/bash
-exec external/armv7-eabihf-linux-gnu-2020.08-1/bin/arm-buildroot-linux-gnueabihf-strip.br_real $@
+exec external/armv7-eabihf-linux-gnu-2020.08-1/bin/arm-buildroot-linux-gnueabihf-strip $@

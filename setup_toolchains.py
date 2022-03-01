@@ -37,16 +37,32 @@ _AVAILABLE_TOOLCHAINS = {
     },
 }
 
-_ALL_TOOLS = [
-    'ar',
-    'cpp',
-    'gcc',
-    'gcov',
-    'ld',
-    'nm',
-    'objdump',
-    'strip',
-]
+_ALL_TOOLS = {
+    'ar': {
+        'buildroot_name': 'ar'
+    },
+    'cpp': {
+        'buildroot_name': 'cpp.br_real'
+    },
+    'gcc': {
+        'buildroot_name': 'gcc.br_real'
+    },
+    'gcov': {
+        'buildroot_name': 'gcov'
+    },
+    'ld': {
+        'buildroot_name': 'ld'
+    },
+    'nm': {
+        'buildroot_name': 'nm'
+    },
+    'objdump': {
+        'buildroot_name': 'objdump'
+    },
+    'strip': {
+        'buildroot_name': 'strip'
+    },
+}
 
 
 def create_wrappers(wrapper_dir):
@@ -56,23 +72,23 @@ def create_wrappers(wrapper_dir):
     except FileExistsError:
       pass
 
-    for version, info in buildroot_versions.items():
+    for version, version_info in buildroot_versions.items():
       try:
         os.mkdir(os.path.join(wrapper_dir, arch, version))
       except FileExistsError:
         pass
 
-      for tool in _ALL_TOOLS:
+      for tool, tool_info in _ALL_TOOLS.items():
         toolchain_name = f'{arch}-linux-gnu-{version}'
         wrapper_name = f'{toolchain_name}-{tool}'
-        actual_tool_name = f'{info["tool_prefix"]}-{tool}'
+        actual_tool_name = f'{version_info["tool_prefix"]}-{tool_info["buildroot_name"]}'
         wrapper_path = os.path.join(wrapper_dir, arch, version, wrapper_name)
 
         with open(wrapper_path, 'w') as f:
           f.write('#!/bin/bash\n')
           # Uses buildroot's ".br_real" wrapper to allow -no-canonical-prefix,
           # -fno-canonical-system-headers, and --sysroot to correctly work (using relative paths).
-          f.write(f'exec external/{toolchain_name}/bin/{actual_tool_name}.br_real $@\n')
+          f.write(f'exec external/{toolchain_name}/bin/{actual_tool_name} $@\n')
 
         os.chmod(wrapper_path, 0o777)
 
@@ -80,7 +96,7 @@ def create_wrappers(wrapper_dir):
 def write_toolchain_info(filename):
   with open(filename, 'w') as f:
     f.write('AVAILABLE_TOOLCHAINS = {}\n'.format(str(_AVAILABLE_TOOLCHAINS).replace('\'', '"')))
-    f.write('ALL_TOOLS = {}\n'.format(str(_ALL_TOOLS).replace('\'', '"')))
+    f.write('ALL_TOOLS = {}\n'.format(str(list(_ALL_TOOLS)).replace('\'', '"')))
 
 
 def write_test_script(filename):
