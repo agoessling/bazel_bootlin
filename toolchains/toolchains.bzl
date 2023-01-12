@@ -113,7 +113,7 @@ def _impl_cc_bootlin_toolchain_config(ctx):
     toolchain_name = "{0}-linux-gnu-{1}".format(ctx.attr.architecture, ctx.attr.buildroot_version)
 
     sysroot = "external/{0}/{1}/sysroot".format(
-        toolchain_name,
+        ctx.attr.buildroot_base or toolchain_name,
         AVAILABLE_TOOLCHAINS[ctx.attr.architecture][ctx.attr.buildroot_version]["tool_prefix"],
     )
 
@@ -181,12 +181,36 @@ def _impl_cc_bootlin_toolchain_config(ctx):
             ),
             flag_set(
                 actions = all_cpp_compile_actions,
-                flag_groups = [flag_group(flags = [
-                    "-std=c++17",
-                ])],
+                flag_groups = [
+                    flag_group(
+                        flags = [
+                            "-std=c++17",
+                        ] + ctx.attr.extra_cxxflags,
+                    ),
+                ],
             ),
         ],
     )
+
+    rpaths = []
+    if ctx.attr.bazel_output_base and ctx.attr.sysroot_ld:
+        abs_sysroot = "{output_base}/{sysroot}".format(
+            output_base = ctx.attr.bazel_output_base,
+            sysroot = sysroot,
+        )
+
+        rpaths = [
+            flag.format(abs_sysroot = abs_sysroot)
+            for flag in [
+                "-Wl,--rpath={abs_sysroot}/lib",
+                "-Wl,--rpath={abs_sysroot}/usr/lib",
+            ]
+        ] + [
+            "-Wl,--dynamic-linker={output_base}/{sysroot_ld}".format(
+                output_base = ctx.attr.bazel_output_base,
+                sysroot_ld = ctx.attr.sysroot_ld.files.to_list()[0].path,
+            ),
+        ]
 
     feature_linker_flags = feature(
         name = "linker_flags",
@@ -201,7 +225,7 @@ def _impl_cc_bootlin_toolchain_config(ctx):
                     "-pass-exit-codes",
                     "-lstdc++",
                     "-lm",
-                ])],
+                ] + rpaths + ctx.attr.extra_ldflags)],
             ),
             flag_set(
                 actions = all_link_actions,
@@ -273,6 +297,25 @@ cc_bootlin_toolchain_config = rule(
         "buildroot_version": attr.string(
             mandatory = True,
             doc = "Toolchain buildroot version.",
+        ),
+        "buildroot_base": attr.string(
+            default = "",
+            doc = "Workspace naming containing toolchain buildroot.",
+        ),
+        "bazel_output_base": attr.string(
+            default = "",
+            doc = "Absolute path used as a prefix for linker rpaths if provided.",
+        ),
+        "sysroot_ld": attr.label(
+            doc = "Replacement for system dynamic linker.",
+        ),
+        "extra_cxxflags": attr.string_list(
+            default = [],
+            doc = "Additional flags used for C++ compile actions.",
+        ),
+        "extra_ldflags": attr.string_list(
+            default = [],
+            doc = "Additional flags used for link actions.",
         ),
     },
     provides = [CcToolchainConfigInfo],
