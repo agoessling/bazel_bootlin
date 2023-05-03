@@ -1,0 +1,2 @@
+#!/bin/bash
+exec external/x86-64-linux-gnu-2022.08-1/bin/x86_64-buildroot-linux-gnu-nm $@
