@@ -100,8 +100,8 @@ def create_wrappers(wrapper_dir):
 
 def write_toolchain_info(filename):
   with open(filename, 'w') as f:
-    f.write('AVAILABLE_TOOLCHAINS = {}\n'.format(str(_AVAILABLE_TOOLCHAINS).replace('\'', '"')))
-    f.write('ALL_TOOLS = {}\n'.format(str(list(_ALL_TOOLS)).replace('\'', '"')))
+    f.write(f'AVAILABLE_TOOLCHAINS = {_AVAILABLE_TOOLCHAINS}\n')
+    f.write(f'ALL_TOOLS = {list(_ALL_TOOLS)}\n')
 
 
 def write_test_script(filename):
@@ -112,9 +112,11 @@ def write_test_script(filename):
 
     for arch, buildroot_versions in _AVAILABLE_TOOLCHAINS.items():
       for version in buildroot_versions:
-        platform = '@bazel_bootlin//platforms:{}-linux-gnu-{}'.format(arch, version)
-        f.write('bazel build --verbose_failures --platforms={} //test:test_cpp\n'.format(platform))
-        f.write('bazel build --verbose_failures --platforms={} //test:test_c\n'.format(platform))
+        platform = f'@bazel_bootlin//platforms:{arch}-linux-gnu-{version}'
+        f.write(f'bazel build --verbose_failures --platforms={platform} //test:test_cpp\n')
+        f.write(f'bazel build --verbose_failures --platforms={platform} //test:test_c\n')
+
+  os.chmod(filename, 0o777)
 
 
 def main():

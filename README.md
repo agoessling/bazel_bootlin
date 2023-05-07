@@ -51,7 +51,7 @@ toolchains:
 
 | Architecture | Buildroot Version |
 | --- | --- |
-| `x86-64` | `2021.11-5` |
+| `x86-64` | `2022.08-1`, `2021.11-5` |
 | `x86-64-core-i7` | `2020.08-1` |
 | `aarch64` | `2021.11-1`, `2020.08-1` |
 | `armv7-eabihf` | `2020.08-1` |
@@ -59,6 +59,12 @@ toolchains:
 This list is easily expanded.  If a toolchain of interest isn't available feel free to submit and
 [issue](https://github.com/agoessling/bazel_bootlin/issues), or alternatively take a look at
 `_AVAILABLE_TOOLCHAINS` in [`setup_toolchains.py`](setup_toolchains.py) and create a pull request.
+Don't forget to actually run `setup_toolchains.py` after adding a toolchain and before submitting a
+PR:
+
+```Shell
+bazel run //:setup_toolchains
+```
 
 ### Platforms
 
