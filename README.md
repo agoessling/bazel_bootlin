@@ -103,3 +103,71 @@ build --platforms=@bazel_bootlin//platforms:{architecture}-linux-gnu-{buildroot_
 ```
 
 Then a simple `bazel build //...` will utilize the desired toolchain.
+
+### Toolchain customization
+
+Toolchains can also be registered to allow selection with toolchain resolution.
+
+```Starlark
+# //:WORKSPACE.bazel
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "bazel_bootlin",
+    # See release page for latest version url and sha.
+)
+
+load("@bazel_bootlin//:defs.bzl", "bootlin_toolchain")
+
+bootlin_toolchain(
+    name = "gcc11",
+    architecture = "x86-64",
+    buildroot_version = "2022.08-1",
+)
+
+register_toolchains(
+    "@gcc11//:toolchain",
+)
+```
+
+Toolchains defined in this way can also be configured:
+
+```Starlark
+# //:WORKSPACE.bazel
+
+bootlin_toolchain(
+    name = "gcc11",
+    architecture = "x86-64",
+    buildroot_version = "2022.08-1",
+    extra_cxxflags = [
+        "-std=c++20",
+        "-fdiagnostics-color=always",
+        "-Werror",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Wconversion",
+    ],
+)
+```
+
+If multiple toolchains are registered, toolchain resolution selects the first
+available and compatible toolchain.
+[`--extra_toolchains`](https://bazel.build/reference/command-line-reference#flag--extra_toolchains)
+can then be used to select a specific toolchain when running Bazel:
+
+```Starlark
+# //:WORKSPACE.bazel
+
+register_toolchains(
+    "@gcc11//:toolchain",
+    "@gcc10//:toolchain",
+    "@gcc9//:toolchain",
+    "@llvm15//:...:"
+)
+```
+
+```Shell
+bazel build --extra_toolchains="@gcc11//:toolchain" //...
+```
