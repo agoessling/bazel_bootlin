@@ -1,2 +1,0 @@
-#!/bin/bash
-exec external/x86-64-core-i7-linux-gnu-2020.08-1/bin/x86_64-buildroot-linux-gnu-ar $@
