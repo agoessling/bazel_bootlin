@@ -34,12 +34,14 @@ load("@bazel_bootlin//toolchains:toolchains.bzl", "bootlin_toolchain_deps")
 
 bootlin_toolchain_deps(
     architecture = "x86-64-core-i7",
+    cstdlib = "glibc",
     buildroot_version = "2020.08-1",
 )
 ```
 
 * `architecture` - refers to the [architecture
   string](https://toolchains.bootlin.com/toolchains.html) used by Bootlin.
+* `cstdlib` - refers to the [cstdlib string](https://toolchains.bootlin.com/releases_x86-64-core-i7.html#:~:text=64%2Dcore%2Di7%2D%2D-,glibc%2D%2Dstable,-%2D2022.08%2D1%20Download) used by bootlin.
 * `buildroot_version` - refers to the [Buildroot version
   string](https://toolchains.bootlin.com/releases_x86-64-core-i7.html#:~:text=i7%2D%2Dglibc%2D%2Dstable%2D-,2021.11%2D1,-Download%20sha256)
 used by Bootlin.
@@ -49,12 +51,12 @@ used by Bootlin.
 Currently `bazel_bootlin` only provides the "glibc--stable" version of the following Bootlin
 toolchains:
 
-| Architecture | Buildroot Version |
-| --- | --- |
-| `x86-64` | `2022.08-1`, `2021.11-5` |
-| `x86-64-core-i7` | `2020.08-1` |
-| `aarch64` | `2021.11-1`, `2020.08-1` |
-| `armv7-eabihf` | `2020.08-1` |
+| Architecture | cstdlib | Buildroot Version |
+| --- | --- | --- |
+| `x86-64` | `glibc` | `2022.08-1`, `2021.11-5` |
+| `x86-64-core-i7` |`glibc` | `2020.08-1` |
+| `aarch64` | `glibc`, `musl` | `2021.11-1`, `2020.08-1` |
+| `armv7-eabihf` | `glibc` | `2020.08-1` |
 
 This list is easily expanded.  If a toolchain of interest isn't available feel free to submit and
 [issue](https://github.com/agoessling/bazel_bootlin/issues), or alternatively take a look at
@@ -74,7 +76,7 @@ toolchain that is included.  The platforms specify `constraint_value` for the ca
 
 ```Starlark
 platform(
-    name = "{architecture}-linux-gnu-{buildroot_version}",
+    name = "{architecture}-linux-{cstdlib}-{buildroot_version}",
     constraint_values = [
         "@platforms//cpu:{architecture}",
         "@platforms//os:linux",
@@ -91,7 +93,7 @@ In order to enable toolchain selection via platforms, Bazel requires a special f
 target platform:
 
 ```Shell
-bazel build --incompatible_enable_cc_toolchain_resolution --platforms=@bazel_bootlin//platforms:{architecture}-linux-gnu-{buildroot_version} //...
+bazel build --incompatible_enable_cc_toolchain_resolution --platforms=@bazel_bootlin//platforms:{architecture}-linux-{cstdlib}-{buildroot_version} //...
 ```
 
 The ergonomics can be improved by placing the flags in a
@@ -99,7 +101,7 @@ The ergonomics can be improved by placing the flags in a
 
 ```Shell
 build --incompatible_enable_cc_toolchain_resolution
-build --platforms=@bazel_bootlin//platforms:{architecture}-linux-gnu-{buildroot_version}
+build --platforms=@bazel_bootlin//platforms:{architecture}-linux-{cstdlib}-{buildroot_version}
 ```
 
 Then a simple `bazel build //...` will utilize the desired toolchain.

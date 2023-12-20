@@ -1,2 +1,0 @@
-#!/bin/bash
-exec external/aarch64-linux-gnu-2020.08-1/bin/aarch64-buildroot-linux-gnu-strip $@

@@ -14,13 +14,14 @@ load(
     "AVAILABLE_TOOLCHAINS",
 )
 
-def bootlin_toolchain_deps(architecture, buildroot_version):
+def bootlin_toolchain_deps(architecture, cstdlib, buildroot_version):
     if (architecture not in AVAILABLE_TOOLCHAINS or
-        buildroot_version not in AVAILABLE_TOOLCHAINS[architecture]):
+        cstdlib not in AVAILABLE_TOOLCHAINS[architecture] or
+        buildroot_version not in AVAILABLE_TOOLCHAINS[architecture][cstdlib]):
         fail("""
-Bootlin architecture and buildroot version combo ({0}, {1}) not supported.
+Bootlin architecture and buildroot version combo ({0}, {1}, {2}) not supported.
 If required, file an issue here: https://github.com/agoessling/bazel_bootlin/issues
-""".format(architecture, buildroot_version))
+""".format(architecture, cstdlib, buildroot_version))
 
     TOOLCHAIN_BUILD_FILE = """
 filegroup(
@@ -29,18 +30,19 @@ filegroup(
     visibility = ["//visibility:public"],
 )"""
 
-    toolchain_name = "{0}-linux-gnu-{1}".format(architecture, buildroot_version)
+    toolchain_name = "{0}-linux-{1}-{2}".format(architecture, cstdlib, buildroot_version)
 
     http_archive(
         name = toolchain_name,
         build_file_content = TOOLCHAIN_BUILD_FILE,
         url = ("https://toolchains.bootlin.com/downloads/releases/toolchains/" +
-               "{0}/tarballs/{0}--glibc--stable-{1}.tar.bz2").format(
+               "{0}/tarballs/{0}--{1}--stable-{2}.tar.bz2").format(
             architecture,
+            cstdlib,
             buildroot_version,
         ),
-        sha256 = AVAILABLE_TOOLCHAINS[architecture][buildroot_version]["sha256"],
-        strip_prefix = "{0}--glibc--stable-{1}".format(architecture, buildroot_version),
+        sha256 = AVAILABLE_TOOLCHAINS[architecture][cstdlib][buildroot_version]["sha256"],
+        strip_prefix = "{0}--{1}--stable-{2}".format(architecture, cstdlib, buildroot_version),
     )
 
     native.register_toolchains(
@@ -49,11 +51,12 @@ filegroup(
 
 def bootlin_all_toolchain_deps():
     for architecture in AVAILABLE_TOOLCHAINS:
-        for buildroot_version in AVAILABLE_TOOLCHAINS[architecture]:
-            bootlin_toolchain_deps(architecture, buildroot_version)
+        for cstdlib in AVAILABLE_TOOLCHAINS[architecture]:
+            for buildroot_version in AVAILABLE_TOOLCHAINS[architecture][cstdlib]:
+                bootlin_toolchain_deps(architecture, cstdlib, buildroot_version)
 
-def bootlin_toolchain_defs(architecture, buildroot_version):
-    toolchain_name = "{0}-linux-gnu-{1}".format(architecture, buildroot_version)
+def bootlin_toolchain_defs(architecture, cstdlib, buildroot_version):
+    toolchain_name = "{0}-linux-{1}-{2}".format(architecture, cstdlib, buildroot_version)
 
     native.filegroup(
         name = "{0}_all_files".format(toolchain_name),
@@ -67,6 +70,7 @@ def bootlin_toolchain_defs(architecture, buildroot_version):
         name = "{0}_toolchain_config".format(toolchain_name),
         architecture = architecture,
         buildroot_version = buildroot_version,
+        cstdlib = cstdlib,
     )
 
     native.cc_toolchain(
@@ -89,7 +93,7 @@ def bootlin_toolchain_defs(architecture, buildroot_version):
         ],
         target_compatible_with = [
             "@platforms//cpu:{0}".format(
-                AVAILABLE_TOOLCHAINS[architecture][buildroot_version]["platform_arch"],
+                AVAILABLE_TOOLCHAINS[architecture][cstdlib][buildroot_version]["platform_arch"],
             ),
             "@platforms//os:linux",
             "@bazel_bootlin//platforms:{0}".format(buildroot_version),
@@ -100,8 +104,9 @@ def bootlin_toolchain_defs(architecture, buildroot_version):
 
 def bootlin_all_toolchain_defs():
     for architecture in AVAILABLE_TOOLCHAINS:
-        for buildroot_version in AVAILABLE_TOOLCHAINS[architecture]:
-            bootlin_toolchain_defs(architecture, buildroot_version)
+        for cstdlib in AVAILABLE_TOOLCHAINS[architecture]:
+            for buildroot_version in AVAILABLE_TOOLCHAINS[architecture][cstdlib]:
+                bootlin_toolchain_defs(architecture, cstdlib, buildroot_version)
 
 def _impl_cc_bootlin_toolchain_config(ctx):
     """Generic implementation for toolchains provided by Bootlin built from buildroot.
@@ -110,11 +115,11 @@ def _impl_cc_bootlin_toolchain_config(ctx):
     https://github.com/bazelbuild/rules_cc/blob/main/cc/private/toolchain/unix_cc_toolchain_config.bzl
     https://github.com/bazelbuild/rules_cc/blob/main/cc/private/toolchain/unix_cc_configure.bzl
     """
-    toolchain_name = "{0}-linux-gnu-{1}".format(ctx.attr.architecture, ctx.attr.buildroot_version)
+    toolchain_name = "{0}-linux-{1}-{2}".format(ctx.attr.architecture, ctx.attr.cstdlib, ctx.attr.buildroot_version)
 
     sysroot = "external/{0}/{1}/sysroot".format(
         toolchain_name,
-        AVAILABLE_TOOLCHAINS[ctx.attr.architecture][ctx.attr.buildroot_version]["tool_prefix"],
+        AVAILABLE_TOOLCHAINS[ctx.attr.architecture][ctx.attr.cstdlib][ctx.attr.buildroot_version]["tool_prefix"],
     )
 
     all_compile_actions = [
@@ -148,8 +153,9 @@ def _impl_cc_bootlin_toolchain_config(ctx):
 
     tool_paths = []
     for tool in ALL_TOOLS:
-        tool_wrapper = "tool_wrappers/{0}/{1}/{2}-{3}".format(
+        tool_wrapper = "tool_wrappers/{0}/{1}/{2}/{3}-{4}".format(
             ctx.attr.architecture,
+            ctx.attr.cstdlib,
             ctx.attr.buildroot_version,
             toolchain_name,
             tool,
@@ -273,6 +279,10 @@ cc_bootlin_toolchain_config = rule(
         "buildroot_version": attr.string(
             mandatory = True,
             doc = "Toolchain buildroot version.",
+        ),
+        "cstdlib": attr.string(
+            mandatory = True,
+            doc = "Toolchain cstlib type i.e. glibc, musl, etc...",
         ),
     },
     provides = [CcToolchainConfigInfo],

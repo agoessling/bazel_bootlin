@@ -1,0 +1,2 @@
+#!/bin/bash
+exec external/aarch64-linux-glibc-2021.11-1/bin/aarch64-buildroot-linux-gnu-cpp.br_real $@
