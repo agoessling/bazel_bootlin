@@ -205,7 +205,6 @@ def _impl_cc_bootlin_toolchain_config(ctx):
                     "-Wl,-no-as-needed",
                     "-Wl,-z,relro,-z,now",
                     "-pass-exit-codes",
-                    "-lstdc++",
                     "-lm",
                 ])],
             ),
