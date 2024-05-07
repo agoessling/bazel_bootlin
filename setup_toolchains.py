@@ -55,6 +55,15 @@ _AVAILABLE_TOOLCHAINS = {
           },
         },
     },
+    'riscv64-lp64d': {
+        'glibc': {
+          '2024.02-1': {
+              'sha256': '3caf08a0fa2447698a4fb51d61c0af9fcfda0c6245509bb00499309ee09cf422',
+              'platform_arch': 'riscv64',
+              'tool_prefix': 'riscv64-buildroot-linux-gnu',
+          },
+        },
+    },
 }
 
 _ALL_TOOLS = {

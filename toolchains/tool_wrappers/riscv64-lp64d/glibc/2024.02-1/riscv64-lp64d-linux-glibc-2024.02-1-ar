@@ -1,0 +1,2 @@
+#!/bin/bash
+exec external/riscv64-lp64d-linux-glibc-2024.02-1/bin/riscv64-buildroot-linux-gnu-ar $@

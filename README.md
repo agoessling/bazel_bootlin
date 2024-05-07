@@ -57,6 +57,7 @@ toolchains:
 | `x86-64-core-i7` |`glibc` | `2020.08-1` |
 | `aarch64` | `glibc`, `musl` | `2021.11-1`, `2020.08-1` |
 | `armv7-eabihf` | `glibc` | `2020.08-1` |
+| `riscv64-lp64d` | `glibc` | `2024.02-1` |
 
 This list is easily expanded.  If a toolchain of interest isn't available feel free to submit and
 [issue](https://github.com/agoessling/bazel_bootlin/issues), or alternatively take a look at
