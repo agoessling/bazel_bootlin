@@ -9,3 +9,9 @@ cc_test(
     srcs = ["test_c.c"],
     visibility = ["//visibility:public"],
 )
+
+cc_library(
+    name = "test_lib",
+    srcs = ["test_lib.cc"],
+    visibility = ["//visibility:public"],
+)

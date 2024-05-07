@@ -146,6 +146,7 @@ def write_test_script(filename):
           platform = f'@bazel_bootlin//platforms:{arch}-linux-{cstdlib}-{version}'
           f.write(f'bazel build --verbose_failures --platforms={platform} //test:test_cpp\n')
           f.write(f'bazel build --verbose_failures --platforms={platform} //test:test_c\n')
+          f.write(f'bazel build --verbose_failures --platforms={platform} //test:test_lib\n')
 
   os.chmod(filename, 0o777)
 
