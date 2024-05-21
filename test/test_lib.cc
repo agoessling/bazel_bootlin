@@ -1,0 +1,3 @@
+void shared_foo() {
+
+}
