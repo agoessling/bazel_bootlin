@@ -6,6 +6,28 @@ Provides hermetic [Bazel](https://bazel.build/) C/C++ toolchains based on
 
 ## Usage
 
+### MODULE
+
+`bazel_bootlin` supports bzlmod.  Add the following to the root `MODULE.bazel` file.
+
+```Starlark
+bazel_dep(name = "bazel_bootlin", version = "0.3.0")
+git_override(
+    module_name = "bazel_bootlin",
+    commit = "642dc1a2357dc3a6919284e574306ed51781551e",
+    remote = "https://github.com/agoessling/bazel_bootlin.git",
+)
+
+# Register bootlin toolchain
+bootlin = use_extension("@bazel_bootlin//extensions:toolchain.bzl", "bootlin")
+bootlin.toolchain(
+    architecture = "x86-64",
+    cstdlib = "glibc",
+    buildroot_version = "2022.08-1",
+)
+register_toolchains("@bazel_bootlin//toolchains:x86-64-linux-glibc-2022.08-1_toolchain")
+```
+
 ### WORKSPACE
 
 To incorporate `bazel_bootlin` toolchains into your project, copy the following into your

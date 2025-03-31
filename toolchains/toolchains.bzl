@@ -14,7 +14,7 @@ load(
     "AVAILABLE_TOOLCHAINS",
 )
 
-def bootlin_toolchain_deps(architecture, cstdlib, buildroot_version):
+def bootlin_toolchain_deps(architecture, cstdlib, buildroot_version, register_toolchain = True):
     if (architecture not in AVAILABLE_TOOLCHAINS or
         cstdlib not in AVAILABLE_TOOLCHAINS[architecture] or
         buildroot_version not in AVAILABLE_TOOLCHAINS[architecture][cstdlib]):
@@ -45,9 +45,10 @@ filegroup(
         strip_prefix = "{0}--{1}--stable-{2}".format(architecture, cstdlib, buildroot_version),
     )
 
-    native.register_toolchains(
-        "@bazel_bootlin//toolchains:{0}_toolchain".format(toolchain_name),
-    )
+    if register_toolchain:
+        native.register_toolchains(
+            "@bazel_bootlin//toolchains:{0}_toolchain".format(toolchain_name),
+        )
 
 def bootlin_all_toolchain_deps():
     for architecture in AVAILABLE_TOOLCHAINS:
