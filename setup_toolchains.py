@@ -14,6 +14,12 @@ _AVAILABLE_TOOLCHAINS = {
               'platform_arch': 'x86_64',
               'tool_prefix': 'x86_64-buildroot-linux-gnu',
           },
+          '2024.05-1': {
+              'sha256': '932823ca9a3e067e7e2a29810a666d20c9cc5bb550de947f6879e38ace1aa955',
+              'archive_ext': '.tar.xz',
+              'platform_arch': 'x86_64',
+              'tool_prefix': 'x86_64-buildroot-linux-gnu',
+          },
         },
     },
     'x86-64-core-i7': {

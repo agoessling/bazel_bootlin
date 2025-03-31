@@ -36,10 +36,11 @@ filegroup(
         name = toolchain_name,
         build_file_content = TOOLCHAIN_BUILD_FILE,
         url = ("https://toolchains.bootlin.com/downloads/releases/toolchains/" +
-               "{0}/tarballs/{0}--{1}--stable-{2}.tar.bz2").format(
+               "{0}/tarballs/{0}--{1}--stable-{2}{3}").format(
             architecture,
             cstdlib,
             buildroot_version,
+            AVAILABLE_TOOLCHAINS[architecture][cstdlib][buildroot_version].get("archive_ext", ".tar.bz2"),
         ),
         sha256 = AVAILABLE_TOOLCHAINS[architecture][cstdlib][buildroot_version]["sha256"],
         strip_prefix = "{0}--{1}--stable-{2}".format(architecture, cstdlib, buildroot_version),
