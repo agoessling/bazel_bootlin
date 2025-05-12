@@ -14,7 +14,7 @@ load(
     "AVAILABLE_TOOLCHAINS",
 )
 
-def bootlin_toolchain_deps(architecture, cstdlib, buildroot_version):
+def bootlin_toolchain_deps(architecture, cstdlib, buildroot_version, url = None):
     if (architecture not in AVAILABLE_TOOLCHAINS or
         cstdlib not in AVAILABLE_TOOLCHAINS[architecture] or
         buildroot_version not in AVAILABLE_TOOLCHAINS[architecture][cstdlib]):
@@ -32,15 +32,18 @@ filegroup(
 
     toolchain_name = "{0}-linux-{1}-{2}".format(architecture, cstdlib, buildroot_version)
 
-    http_archive(
-        name = toolchain_name,
-        build_file_content = TOOLCHAIN_BUILD_FILE,
+    if not url:
         url = ("https://toolchains.bootlin.com/downloads/releases/toolchains/" +
                "{0}/tarballs/{0}--{1}--stable-{2}.tar.bz2").format(
             architecture,
             cstdlib,
             buildroot_version,
-        ),
+        )
+
+    http_archive(
+        name = toolchain_name,
+        build_file_content = TOOLCHAIN_BUILD_FILE,
+        url = url,
         sha256 = AVAILABLE_TOOLCHAINS[architecture][cstdlib][buildroot_version]["sha256"],
         strip_prefix = "{0}--{1}--stable-{2}".format(architecture, cstdlib, buildroot_version),
     )
